@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gelişmiş Dijital Saat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+      transition: background 0.5s ease;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .container.fullscreen {
+      width: 100vw;
+      height: 100vh;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab:hover, .tab.active {
+      background: rgba(0, 255, 255, 0.3);
+    }
+
+    .content {
+      display: none;
+    }
+
+    .content.active {
+      display: block;
+    }
+
+    .clock-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(15px);
+      padding: 50px;
+      border-radius: 25px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1);
+      text-align: center;
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.3s ease;
+      min-width: 320px;
+      max-width: 320px;
+    }
+
+    .container.fullscreen .clock-container {
+      min-width: 80vw;
+      max-width: 80vw;
+      padding: 80px;
+    }
+
+    .clock-container:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 50px rgba(0, 255, 255, 0.3);
+    }
+
+    .time {
+      font-size: 4rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      margin: 0;
+      text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      font-variant-numeric: tabular-nums; /* Sabit genişlikli rakamlar */
+      font-family: 'Orbitron', monospace; /* Monospace font */
+    }
+
+    .container.fullscreen .time {
+      font-size: 8rem;
+      letter-spacing: 8px;
+    }
+
+    .seconds, .milliseconds {
+      font-size: 2rem;
+      vertical-align: super;
+      animation: pulse 1s infinite;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .container.fullscreen .seconds, .container.fullscreen .milliseconds {
+      font-size: 4rem;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; text-shadow: 0 0 5px #ff007a, 0 0 10px #ff007a; }
+      50% { opacity: 0.7; text-shadow: 0 0 10px #ff007a, 0 0 20px #ff007a; }
+    }
+
+    .date {
+      font-size: 1.5rem;
+      margin-top: 15px;
+      opacity: 0.85;
+      text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff;
+    }
+
+    .container.fullscreen .date {
+      font-size: 3rem;
+    }
+
+    .background-animation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+      animation: bg-move 15s infinite linear;
+    }
+
+    @keyframes bg-move {
+      0% { background-position: 0 0; }
+      100% { background-position: 100% 100%; }
+    }
+
+    .menu {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+    }
+
+    select, input, button {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #00ffcc;
+      border: 1px solid #00ffcc;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    select option {
+      background: #1a1a1a;
+      color: #00ffcc;
+    }
+
+    input {
+      width: 60px;
+      text-align: center;
+    }
+
+    button:hover, select:hover {
+      background: rgba(0, 255, 255, 0.3);
+      color: #fff;
+    }
+
+    .timer-inputs, .stopwatch-controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .container.fullscreen .timer-inputs input,
+    .container.fullscreen .stopwatch-controls button {
+      font-size: 1.5rem;
+      padding: 15px;
+      width: 100px;
+    }
+
+    .laps {
+      margin-top: 20px;
+      max-height: 100px;
+      overflow-y: auto;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .container.fullscreen .laps {
+      font-size: 1.8rem;
+      max-height: 200px;
+    }
+
+    .laps div {
+      padding: 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Tema: Retro */
+    .theme-retro body {
+      background: linear-gradient(135deg, #3c2f2f, #be9b7b);
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    .theme-retro .clock-container {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #fff;
+      box-shadow: 0 0 15px #fff;
+    }
+
+    .theme-retro .time {
+      color: #ffeb3b;
+      text-shadow: 0 0 10px #ffeb3b;
+      font-size: 3.5rem;
+    }
+
+    .theme-retro .seconds, .theme-retro .milliseconds {
+      color: #ff5722;
+      text-shadow: 0 0 10px #ff5722;
+    }
+
+    .theme-retro .date {
+      color: #fff;
+      text-shadow: 0 0 5px #fff;
+      font-size: 1.2rem;
+    }
+
+    /* Tema: Minimal */
+    .theme-minimal body {
+      background: #eceff1;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .theme-minimal .clock-container {
+      background: #fff;
+      border: none;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .theme-minimal .time {
+      color: #333;
+      text-shadow: none;
+      font-size: 3.5rem;
+      font-weight: 400;
+    }
+
+    .theme-minimal .seconds, .theme-minimal .milliseconds {
+      color: #666;
+      text-shadow: none;
+      animation: none;
+      font-size: 1.8rem;
+    }
+
+    .theme-minimal .date {
+      color: #555;
+      text-shadow: none;
+      font-size: 1.2rem;
+    }
+
+    .theme-minimal .background-animation {
+      display: none;
+    }
+
+    /* Tema: Cyberpunk */
+    .theme-cyberpunk body {
+      background: linear-gradient(135deg, #1c0524, #3d0b5e);
+    }
+
+    .theme-cyberpunk .clock-container {
+      border: 2px solid #b300ff;
+      box-shadow: 0 0 20px #b300ff, inset 0 0 10px #b300ff;
+      background: rgba(30, 5, 36, 0.7);
+    }
+
+    .theme-cyberpunk .time {
+      color: #b300ff;
+      text-shadow: 0 0 15px #b300ff, 0 0 25px #b300ff;
+    }
+
+    .theme-cyberpunk .seconds, .theme-cyberpunk .milliseconds {
+      color: #00e6ff;
+      text-shadow: 0 0 10px #00e6ff;
+    }
+
+    .theme-cyberpunk .date {
+      color: #e6e6e6;
+      text-shadow: 0 0 10px #e6e6e6;
+    }
+
+    .theme-cyberpunk .background-animation {
+      background: radial-gradient(circle, rgba(179, 0, 255, 0.1) 0%, transparent 70%);
+    }
+
+    @media (max-width: 600px) {
+      .time {
+        font-size: 2.5rem;
+      }
+      .seconds, .milliseconds {
+        font-size: 1.2rem;
+      }
+      .date {
+        font-size: 1rem;
+      }
+      .clock-container {
+        padding: 25px;
+        min-width: 240px;
+        max-width: 240px;
+      }
+      .container.fullscreen .clock-container {
+        min-width: 90vw;
+        max-width: 90vw;
+        padding: 40px;
+      }
+      .container.fullscreen .time {
+        font-size: 5rem;
+      }
+      .container.fullscreen .seconds, .container.fullscreen .milliseconds {
+        font-size: 2.5rem;
+      }
+      .container.fullscreen .date {
+        font-size: 1.8rem;
+      }
+      select, input, button {
+        font-size: 0.9rem;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-animation"></div>
+  <div class="container">
+    <div class="menu">
+      <select id="theme-select" onchange="changeTheme()">
+        <option value="modern">Modern</option>
+        <option value="retro">Retro</option>
+        <option value="minimal">Minimal</option>
+        <option value="cyberpunk">Cyberpunk</option>
+      </select>
+      <select id="timezone-select" onchange="updateClock()">
+        <option value="Europe/Istanbul">Türkiye (UTC+3)</option>
+        <option value="America/New_York">New York (UTC-4)</option>
+        <option value="Asia/Tokyo">Tokyo (UTC+9)</option>
+        <option value="Europe/London">Londra (UTC+0)</option>
+      </select>
+      <button onclick="toggleFullscreen()">Tam Ekran</button>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('clock')">Saat</div>
+      <div class="tab" onclick="showTab('timer')">Timer</div>
+      <div class="tab" onclick="showTab('stopwatch')">Kronometre</div>
+    </div>
+    <div class="clock-container">
+      <div id="clock" class="content active">
+        <div class="time" id="time">00:00:<span class="seconds">00</span></div>
+        <div class="date" id="date">Tarih</div>
+      </div>
+      <div id="timer" class="content">
+        <div class="time" id="timer-display">00:00</div>
+        <div class="timer-inputs">
+          <input type="number" id="timer-minutes" min="0" max="59" placeholder="Dakika">
+          <input type="number" id="timer-seconds" min="0" max="59" placeholder="Saniye">
+          <button onclick="startTimer()">Başlat</button>
+          <button onclick="resetTimer()">Sıfırla</button>
+        </div>
+      </div>
+      <div id="stopwatch" class="content">
+        <div class="time" id="stopwatch-display">00:00:<span class="milliseconds">00</span></div>
+        <div class="stopwatch-controls">
+          <button onclick="startStopwatch()">Başlat/Dur</button>
+          <button onclick="lapStopwatch()">Tur</button>
+          <button onclick="resetStopwatch()">Sıfırla</button>
+        </div>
+        <div class="laps" id="laps"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let timerInterval, stopwatchInterval;
+    let timerSeconds = 0, stopwatchMilliseconds = 0;
+    let stopwatchRunning = false;
+
+    // Saat Güncelleme
+    function updateClock() {
+      const timezone = document.getElementById('timezone-select').value || 'Europe/Istanbul';
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('tr-TR', {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        weekday: 'long',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
+      const parts = formatter.formatToParts(now);
+      const hours = parts.find(part => part.type === 'hour').value;
+      const minutes = parts.find(part => part.type === 'minute').value;
+      const seconds = parts.find(part => part.type === 'second').value;
+      const dayName = parts.find(part => part.type === 'weekday').value;
+      const day = parts.find(part => part.type === 'day').value;
+      const month = parts.find(part => part.type === 'month').value;
+      const year = parts.find(part => part.type === 'year').value;
+
+      document.getElementById('time').innerHTML = `${hours}:${minutes}:<span class="seconds">${seconds}</span>`;
+      document.getElementById('date').textContent = `${dayName}, ${day}.${month}.${year}`;
+    }
+
+    // Sekme Değiştirme
+    function showTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.content').forEach(content => content.classList.remove('active'));
+      document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Tema Değiştirme
+    function changeTheme() {
+      const theme = document.getElementById('theme-select').value;
+      document.body.className = theme ? `theme-${theme}` : '';
+    }
+
+    // Tam Ekran Modu
+    function toggleFullscreen() {
+      const container = document.querySelector('.container');
+      if (!document.fullscreenElement) {
+        container.classList.add('fullscreen');
+        if (container.requestFullscreen) {
+          container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+          container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+          container.mozRequestFullScreen();
+        }
+      } else {
+        container.classList.remove('fullscreen');
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        }
+      }
+    }
+
+    // Timer Fonksiyonları
+    function startTimer() {
+      const minutes = parseInt(document.getElementById('timer-minutes').value) || 0;
+      const seconds = parseInt(document.getElementById('timer-seconds').value) || 0;
+      timerSeconds = minutes * 60 + seconds;
+      if (timerSeconds > 0) {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+    }
+
+    function updateTimer() {
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        const audio = new Audio('https://freesound.org/data/previews/254/254814_4031328-lq.mp3');
+        audio.play().catch(() => console.log('Ses çalma engellendi'));
+        alert('Timer tamamlandı!');
+        return;
+      }
+      timerSeconds--;
+      const minutes = Math.floor(timerSeconds / 60);
+      const seconds = timerSeconds % 60;
+      document.getElementById('timer-display').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerSeconds = 0;
+      document.getElementById('timer-display').textContent = '00:00';
+      document.getElementById('timer-minutes').value = '';
+      document.getElementById('timer-seconds').value = '';
+    }
+
+    // Kronometre Fonksiyonları
+    function startStopwatch() {
+      if (!stopwatchRunning) {
+        stopwatchRunning = true;
+        document.querySelector('#stopwatch button:first-child').textContent = 'Dur';
+        stopwatchInterval = setInterval(updateStopwatch, 10);
+      } else {
+        stopwatchRunning = false;
+        document.querySelector('#stopwatch button:first-child').textContent = 'Başlat';
+        clearInterval(stopwatchInterval);
+      }
+    }
+
+    function updateStopwatch() {
+      stopwatchMilliseconds += 10;
+      const minutes = Math.floor(stopwatchMilliseconds / 60000);
+      const seconds = Math.floor((stopwatchMilliseconds % 60000) / 1000);
+      const milliseconds = Math.floor((stopwatchMilliseconds % 1000) / 10);
+      const display = document.getElementById('stopwatch-display');
+      display.innerHTML = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:<span class="milliseconds">${String(milliseconds).padStart(2, '0')}</span>`;
+    }
+
+    function lapStopwatch() {
+      if (stopwatchRunning) {
+        const laps = document.getElementById('laps');
+        const lapTime = document.getElementById('stopwatch-display').textContent.replace(/<[^>]+>/g, '');
+        const lapDiv = document.createElement('div');
+        lapDiv.textContent = `Tur ${laps.childElementCount + 1}: ${lapTime}`;
+        laps.prepend(lapDiv);
+      }
+    }
+
+    function resetStopwatch() {
+      clearInterval(stopwatchInterval);
+      stopwatchRunning = false;
+      stopwatchMilliseconds = 0;
+      const display = document.getElementById('stopwatch-display');
+      display.innerHTML = '00:00:<span class="milliseconds">00</span>';
+      document.getElementById('laps').innerHTML = '';
+      document.querySelector('#stopwatch button:first-child').textContent = 'Başlat';
+    }
+
+    // Klavye Desteği
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter' && document.getElementById('timer').classList.contains('active')) {
+        startTimer();
+      }
+      if (e.code === 'Space' && document.getElementById('stopwatch').classList.contains('active')) {
+        e.preventDefault();
+        startStopwatch();
+      }
+    });
+
+    // Uygulamayı Başlat
+    updateClock();
+    setInterval(updateClock, 1000);
+    changeTheme();
+  </script>
+</body>
+</html>
